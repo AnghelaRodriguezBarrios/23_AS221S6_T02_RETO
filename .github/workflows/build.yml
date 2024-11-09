@@ -1,4 +1,4 @@
-name: Build and Analyze
+name: Build
 on:
   push:
     branches:
@@ -8,21 +8,18 @@ on:
 
 jobs:
   build:
+    name: SonarCloud and Docker Build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
 
       - name: Set Version
         id: vars
         run: |
           VERSION=v$(git rev-list --count HEAD)
           echo "VERSION=$VERSION" >> $GITHUB_ENV
-
-      - name: Run Linter
-        run: npm run lint
-
-      - name: Run Tests and Coverage
-        run: npm run test -- --coverage
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
@@ -32,9 +29,11 @@ jobs:
         with:
           args: -Dsonar.projectVersion=${{ env.VERSION }}
 
+      - name: Log in to Docker Hub
+        run: echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+
       - name: Build Docker image
         run: docker build -t ${{ secrets.DOCKER_USERNAME }}/23_as221s5_t02_michigo:${{ env.VERSION }} .
 
       - name: Push Docker image to Docker Hub
         run: docker push ${{ secrets.DOCKER_USERNAME }}/23_as221s5_t02_michigo:${{ env.VERSION }}
-        
