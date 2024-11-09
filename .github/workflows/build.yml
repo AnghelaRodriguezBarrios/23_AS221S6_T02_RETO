@@ -1,20 +1,55 @@
-name: Build
+name: Build and Analyze
 on:
   push:
     branches:
       - develop
   pull_request:
     types: [opened, synchronize, reopened]
+
 jobs:
-  sonarcloud:
-    name: SonarCloud
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+
+      - name: Set Version
+        id: vars
+        run: |
+          VERSION=v$(git rev-list --count HEAD)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Run Linter
+        run: npm run lint
+
+      - name: Run Tests and Coverage
+        run: npm run test -- --coverage
+
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: -Dsonar.projectVersion=${{ env.VERSION }}
+
+      - name: Build Docker image
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/23_as221s5_t02_michigo:${{ env.VERSION }} .
+
+      - name: Push Docker image to Docker Hub
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/23_as221s5_t02_michigo:${{ env.VERSION }}
+
+      - name: Send Email Notification
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "⚠️ GitHub Action Failed: Build v${{ env.VERSION }}"
+          body: |
+            Hola,
+            
+            El build para la versión ${{ env.VERSION }} ha fallado. Revisa los detalles en GitHub para resolver el problema.
+          to: anghela.rodriguez@vallegrande.edu.pe
+          from: GitHub Actions <${{ secrets.EMAIL_USERNAME }}>
