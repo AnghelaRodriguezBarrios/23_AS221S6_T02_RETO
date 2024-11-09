@@ -37,19 +37,4 @@ jobs:
 
       - name: Push Docker image to Docker Hub
         run: docker push ${{ secrets.DOCKER_USERNAME }}/23_as221s5_t02_michigo:${{ env.VERSION }}
-
-      - name: Send Email Notification
-        if: failure()
-        uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: smtp.gmail.com
-          server_port: 587
-          username: ${{ secrets.EMAIL_USERNAME }}
-          password: ${{ secrets.EMAIL_PASSWORD }}
-          subject: "⚠️ GitHub Action Failed: Build v${{ env.VERSION }}"
-          body: |
-            Hola,
-            
-            El build para la versión ${{ env.VERSION }} ha fallado. Revisa los detalles en GitHub para resolver el problema.
-          to: anghela.rodriguez@vallegrande.edu.pe
-          from: GitHub Actions <${{ secrets.EMAIL_USERNAME }}>
+        
