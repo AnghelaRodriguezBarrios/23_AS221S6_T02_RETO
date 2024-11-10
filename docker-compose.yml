@@ -2,7 +2,7 @@ version: '2.4'
 
 services:
   app:
-    image: anghelarodriguez/23_as221s5_t02_michigo:${VERSION:-v10}
+    image: anghelarodriguez/23_as221s5_t02_michigo:${VERSION:-v11}
     container_name: michigo_proyect
     ports:
       - "4200:4200"
