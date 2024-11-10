@@ -2,7 +2,31 @@ version: '2.4'
 
 services:
   app:
-    image: anghelarodriguez/23_as221s5_t02_michigo:${VERSION:-v9}
+    image: anghelarodriguez/23_as221s5_t02_michigo:${VERSION:-v10}
     container_name: michigo_proyect
     ports:
       - "4200:4200"
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"          # Limita el uso de CPU al 50%
+          memory: 512M         # Limita el uso de memoria a 512 MB
+        reservations:
+          memory: 256M         # Reserva 256 MB de memoria
+    healthcheck:
+      test: ["CMD", "curl", "-f", "4200"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - custom_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"       # Tamaño máximo del archivo de log
+        max-file: "3"         # Máximo número de archivos de log
+
+networks:
+  custom_network:
+    driver: bridge
